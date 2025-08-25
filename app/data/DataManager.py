@@ -28,7 +28,6 @@ class Order(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     client_name = sa.Column(sa.String(100), nullable=False)
     product_id = sa.Column(sa.Integer, sa.ForeignKey('Product.id'), nullable=False)
-    # Adicionando a coluna client_house de volta
     client_house = sa.Column(sa.String(200), nullable=False)
 
     # Método para converter o objeto em um dicionário serializável
@@ -42,7 +41,7 @@ class Order(Base):
 
 class BaseManager:
     """Gerenciador genérico para interações com o banco de dados."""
-    def __init__(self, session: Session, model):
+    def __init__(self, session: Session, model: Type[Base]):
         self.session = session
         self.model = model
 

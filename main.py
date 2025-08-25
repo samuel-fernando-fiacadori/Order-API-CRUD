@@ -1,36 +1,18 @@
 from flask import Flask, jsonify, request
-from app.data.DataManager import BaseManager, Order, Product, Base
-import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker, Session
+from app.data.DataManager import BaseManager, Order, Product
+from app.data.database import get_db_session
+from flask_cors import CORS # Importa a extensão CORS
 
 app = Flask(__name__)
-
-# --- Configuração do Banco de Dados ---
-# Conexão e criação das tabelas fora da função de requisição para otimização
-engine = sa.create_engine('sqlite:///app/data/database.db')
-Base.metadata.create_all(engine)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def get_db_session():
-    """
-    Função para obter uma nova sessão de banco de dados para cada requisição.
-    Isso é uma prática recomendada para evitar problemas de concorrência.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+CORS(app) # Habilita o CORS para toda a sua aplicação
 
 # --- Endpoints para a API ---
 
 @app.route('/product/get', methods=['GET'])
 def product_getall():
-    # Usa 'next' para obter a próxima sessão do gerador
     db = next(get_db_session())
     product_manager = BaseManager(db, Product)
     products = product_manager.get_all()
-    # Converte a lista de objetos em uma lista de dicionários
     return jsonify([p.to_dict() for p in products])
 
 @app.route('/order/get', methods=['GET'])
@@ -38,7 +20,6 @@ def order_getall():
     db = next(get_db_session())
     order_manager = BaseManager(db, Order)
     orders = order_manager.get_all()
-    # Converte a lista de objetos em uma lista de dicionários
     return jsonify([o.to_dict() for o in orders])
 
 @app.route('/product/get/<int:_id>', methods=['GET'])
@@ -61,7 +42,6 @@ def order_getit(_id: int):
 
 @app.route('/product/add', methods=['POST'])
 def product_create():
-    # Obtém os dados JSON enviados na requisição
     data = request.get_json()
     if not data or 'name' not in data or 'price' not in data:
         return jsonify({"message": "Invalid data"}), 400
@@ -84,11 +64,12 @@ def order_create():
     db = next(get_db_session())
     order_manager = BaseManager(db, Order)
     try:
-        new_order = order_manager.create(client_name=data['client_name'], product_id=data['product_id'], client_house=data['client_house'])
+        new_order = order_manager.create(
+            client_name=data['client_name'], 
+            product_id=data['product_id'],
+            client_house=data['client_house']
+        )
         return jsonify(new_order.to_dict()), 201
     except Exception as e:
         db.rollback()
         return jsonify({"message": f"Error creating order: {str(e)}"}), 500
-
-if __name__ == '__main__':
-    app.run()
