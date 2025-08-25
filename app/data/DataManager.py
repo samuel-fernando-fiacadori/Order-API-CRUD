@@ -1,7 +1,3 @@
-# --- app/data/DataManager.py ---
-# Aqui ficam seus modelos e a classe de gerenciamento.
-# O gerenciador agora aceita uma sessão como parâmetro.
-
 import sqlalchemy as sa
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from typing import Type
@@ -74,3 +70,23 @@ class BaseManager:
             self.session.commit()
             return True
         return False
+
+
+import sqlalchemy as sa
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from app.data.DataManager import Base, Product, Order
+
+
+engine = sa.create_engine('sqlite:///app/data/database.db')
+Base.metadata.create_all(engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db_session():
+    """
+    Função para obter uma nova sessão de banco de dados para cada requisição.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

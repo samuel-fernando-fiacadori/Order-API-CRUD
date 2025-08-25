@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from app.data.DataManager import BaseManager, Order, Product
-from app.data.database import get_db_session
+from app.data.DataManager import get_db_session
 from flask_cors import CORS # Importa a extensão CORS
 
 app = Flask(__name__)
